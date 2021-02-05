@@ -18,6 +18,10 @@ class Window(QtWidgets.QMainWindow,Ui_MainWindow):
         self.file_path = ''
         self.res_x = 0
         self.res_y = 0
+        self.offset_top =0
+        self.offset_bottom =0
+        self.offset_right =0
+        self.offset_left =0
 
         # Connexions
         self.btn_choose_file.clicked.connect(self.press_file_button)
@@ -36,7 +40,7 @@ class Window(QtWidgets.QMainWindow,Ui_MainWindow):
 
     def press_analyse_button(self):
         if self.file_path != '':
-            video_utils.play_video(self.file_path)
+            video_utils.analyse_video_pass_01(self.file_path,)
 
 
 
