@@ -25,7 +25,7 @@ def get_duration_frames(path):
 def play_video(path):
 
     x_res, y_res = get_resolution(path)
-
+    end_frame = get_duration_frames(path)
     FFMPEG_BIN = "ffmpeg"
     command = [FFMPEG_BIN,
                '-i', path,  # fifo is the named pipe
@@ -35,7 +35,7 @@ def play_video(path):
                '-f', 'image2pipe', '-']
     pipe = sp.Popen(command, stdout=sp.PIPE, bufsize=10 ** 8)
 
-    img_number = 1
+    img_number = 0
     while True:
         # Capture frame-by-frame
         raw_image = pipe.stdout.read(x_res * y_res * 3)
@@ -48,5 +48,8 @@ def play_video(path):
             img_number += 1
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        if img_number == end_frame:
+            break
+
         pipe.stdout.flush()
     cv2.destroyAllWindows()
