@@ -40,7 +40,7 @@ class Window(QtWidgets.QMainWindow,Ui_MainWindow):
 
     def press_analyse_button(self):
         if self.file_path != '':
-            video_utils.analyse_video_pass_01(self.file_path,self.offset_top,self.offset_bottom,self.offset_left,
+            video_utils.analyse_video_pass_01(self.file_path,0,self.offset_top,self.offset_bottom,self.offset_left,
                                               self.offset_right)
 
 
