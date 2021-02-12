@@ -18,10 +18,17 @@ def get_framerate(path):
     metadata = FFProbe(path)
     return metadata.streams[0].__dict__.get('framerate')
 
+def get_timecode(path):
+    metadata = FFProbe(path)
+    return metadata.streams[0].__dict__.get('timecode')
 
 def get_duration_frames(path):
     metadata = FFProbe(path)
     return metadata.streams[0].frames()
+
+def get_codec(path):
+    metadata = FFProbe(path)
+    return metadata.streams[0].codec_description()
 
 
 def play_video(path):
@@ -78,6 +85,10 @@ def analyse_video_pass_01(path, first_image_analysed, offset_top, offset_bottom,
     framerate = get_framerate(path)
     issues_list = []
     resize_frame = ()
+
+    print("TEST")
+    print(get_timecode(path))
+
 
     command = ["ffmpeg",
                '-i', path,  # fifo is the named pipe
