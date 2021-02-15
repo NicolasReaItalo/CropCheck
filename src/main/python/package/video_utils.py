@@ -30,51 +30,12 @@ def get_codec(path):
     metadata = FFProbe(path)
     return metadata.streams[0].codec_description()
 
-
-def play_video(path):
-    x_res, y_res = get_resolution(path)
-    end_frame = get_duration_frames(path)
-
-    command = ["ffmpeg",
-               '-i', path,  # fifo is the named pipe
-               '-pix_fmt', 'bgr24',  # opencv requires bgr24 pixel format.
-               '-vcodec', 'rawvideo',
-               '-an', '-sn',  # we want to disable audio processing (there is no audio)
-               '-f', 'image2pipe', '-']
-    pipe = sp.Popen(command, stdout=sp.PIPE, bufsize=10 ** 8)
-
-    img_number = 0
-    while True:
-        # Capture frame-by-frame
-        raw_image = pipe.stdout.read(x_res * y_res * 3)
-        # transform the byte read into a numpy array
-        image = numpy.frombuffer(raw_image, dtype='uint8')
-        image = image.reshape((y_res, x_res, 3))
-
-        if image is not None:
-            cv2.imshow(f'{os.path.basename(path)}: Analyse en cours. Appuyer sur q pour arrêter', image)
-
-            img_number += 1
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-        if img_number == end_frame:
-            break
-
-        pipe.stdout.flush()
-    cv2.destroyAllWindows()
-    cv2.waitKey(1)
-
-def save_snapshot(image, img_number):
-    path = "./snapshots"
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    filename = os.path.join(path, str(img_number))
-    filename = filename + '.png'
-    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite(filename, image_gray)
+def get_duration(path):
+    metadata = FFProbe(path)
+    return float(metadata.streams[0].__dict__.get('duration'))
 
 
-def analyse_video_pass_01(path, first_image_analysed, offset_top, offset_bottom, offset_left, offset_right):
+def analyse_video_pass_01(path, treshold, first_image_analysed, offset_top, offset_bottom, offset_left, offset_right):
     x_res, y_res = get_resolution(path)
     if x_res > 1920:
         scale_factor = 1
@@ -84,10 +45,16 @@ def analyse_video_pass_01(path, first_image_analysed, offset_top, offset_bottom,
     end_frame = get_duration_frames(path)
     framerate = get_framerate(path)
     issues_list = []
-    resize_frame = ()
 
-    print("TEST")
-    print(get_timecode(path))
+
+
+
+    duree = get_duration(path)
+
+    img_number = int(duree) * framerate
+    print('__________________________________________')
+    print( f'durée = {get_duration(path)} secondes soit = { timecode.frame_to_tc_02(img_number,framerate) }  ou {img_number} images' )
+    print('__________________________________________')
 
 
     command = ["ffmpeg",
@@ -122,16 +89,16 @@ def analyse_video_pass_01(path, first_image_analysed, offset_top, offset_bottom,
         print('....................')
 
 
-        if numpy.array_equal(crop_top, black_h):
+        if numpy.max(crop_top) <= treshold:
             black_lines_detected.append('Ligne du haut')
 
-        if numpy.array_equal(crop_bottom, black_h):
+        if numpy.max(crop_bottom) <= treshold:
             black_lines_detected.append('Ligne du bas')
 
-        if numpy.array_equal(crop_left, black_v):
+        if numpy.max(crop_left) <= treshold:
             black_lines_detected.append('Ligne de gauche')
 
-        if numpy.array_equal(crop_right, black_v):
+        if numpy.max(crop_right) <= treshold:
             black_lines_detected.append('Ligne de droite')
 
         if black_lines_detected != []:
